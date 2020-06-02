@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -45,6 +47,16 @@ class User implements UserInterface
      * @ORM\Column(type="string", length=100)
      */
     private $surname;
+
+    /**
+     * @ORM\OneToMany(targetEntity=Expense::class, mappedBy="user")
+     */
+    private $expenses;
+
+    public function __construct()
+    {
+        $this->expenses = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -144,6 +156,37 @@ class User implements UserInterface
     public function setSurname(string $surname): self
     {
         $this->surname = $surname;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Expense[]
+     */
+    public function getExpenses(): Collection
+    {
+        return $this->expenses;
+    }
+
+    public function addExpense(Expense $expense): self
+    {
+        if (!$this->expenses->contains($expense)) {
+            $this->expenses[] = $expense;
+            $expense->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeExpense(Expense $expense): self
+    {
+        if ($this->expenses->contains($expense)) {
+            $this->expenses->removeElement($expense);
+            // set the owning side to null (unless already changed)
+            if ($expense->getUser() === $this) {
+                $expense->setUser(null);
+            }
+        }
 
         return $this;
     }
